@@ -6,6 +6,8 @@
 
 % ['toes.pl'].
 
+% Currently works for the more difficult case D = 3
+
 % feasible_excess_full( 10, 3, 9 ).
 % feasible_excess_full( 11, 3, 10 ).
 % feasible_excess_full( 12, 3, 11 ).

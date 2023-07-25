@@ -4,11 +4,9 @@
 :- use_module(library(sets)).
 :- use_module(library(ordsets)).
 
-% ['toes.pl'].
+% ['toetables.pl'].
 
-% Currently works for the more difficult case D = 3
-
-% feasible_excess_full( 10, 3, 9 ).
+% feasible_excess_full( 10, 2, 9 ).
 % feasible_excess_full( 11, 3, 10 ).
 % feasible_excess_full( 12, 3, 11 ).
 % feasible_excess_full( 13, 3, 19 ).
@@ -17,9 +15,9 @@
 
 feasible_excess_full( S, D, Excess ) :-
     partitions_trim(S,1,5,D,Parts),
-    maplist(feasible_excess_full( D, Excess), Parts ).
+    maplist(feasible_excess_full2( D, Excess), Parts ).
 
-feasible_excess_full( D, Excess, ToePartition ) :-
+feasible_excess_full2( D, Excess, ToePartition ) :-
     sum( ToePartition, #=, S ),
     MaxNumWebbings #= 1 + (( Excess + S - 3 )//4),
     numlist( MaxNumWebbings, Inds ),
@@ -93,7 +91,26 @@ get_permuted_partitions( [A,B,C], Ps ) :-
     B #= C,
     Ps = [ [A,B,C] ].
 
-feasible_webbing_partitions( D, ToePartition, Excess, NumWebbings, Vs, Partitions, Costs, Scores ) :-
+feasible_webbing_partitions( 2, ToePartition, Excess, NumWebbings, Vs, Partitions, Costs, Scores ) :-
+    length(Partitions, NumWebbings),
+    maplist( length_(3), Partitions ),
+    append( Partitions, Vs ),
+    domain( Vs, 0, 5 ),
+    table_partitions( Partitions ),
+    maplist( get_double_score, Partitions, Scores ),
+    maplist( get_sum, Partitions, Costs ),
+    get_double_score( ToePartition, TargetScore), 
+    sum( ToePartition, #=, S ),
+    ModifiedExcess #= Excess + S,
+    sum( Costs, #=<, ModifiedExcess ),
+    sum( Scores, #>=, TargetScore ),
+    bagof( [C1, C2], I^J^( nth1(I,Costs,C1), nth1(J,Costs,C2), I #< J ), CostPairs),
+    maplist( sum_geq(7), CostPairs),
+    maplist( basesixify, Partitions, BasedPartitions ),
+    numlist( NumWebbings, L ),
+    sorting( BasedPartitions, L, BasedPartitions ).
+
+feasible_webbing_partitions( 3, ToePartition, Excess, NumWebbings, Vs, Partitions, Costs, Scores ) :-
     length(Partitions, NumWebbings),
     maplist( length_(3), Partitions ),
     append( Partitions, Vs ),
@@ -119,6 +136,7 @@ get_sum(L,S) :- sum(L, #=, S).
 table_partitions( Partitions ) :- 
     table( Partitions,  [ [0,1,1], [0,1,2], [1,1,1], [0,1,3], [0,2,2], [1,1,2], [0,1,4], [0,2,3], [1,1,3], [1,2,2], [0,1,5], [0,2,4], [0,3,3], [1,1,4], [1,2,3], [2,2,2] ] ).
 
+get_double_score( [A,B], TS) :- TS #= A*B.
 get_triple_score( [A,B,C], TS) :- TS #= A*B + A*C + B*C.
 
 length_(S,L) :- length(L,S).

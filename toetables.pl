@@ -6,6 +6,8 @@
 
 % ['toetables.pl'].
 
+% feasible_excess_full( 8, 2, 2 ).
+% feasible_excess_full( 9, 2, 6 ).
 % feasible_excess_full( 10, 2, 9 ).
 % feasible_excess_full( 11, 3, 10 ).
 % feasible_excess_full( 12, 3, 11 ).
@@ -30,9 +32,9 @@ feasible_excess( D, ToePartition, Excess, NumWebbings, PossiblePartitions ) :-
     writeln('Number of Webbing Partitions to check is:'),
     length(PartitionsList, KLK),
     writeln(KLK),
-    include( attempt_to_fill_webbing_partition(ToePartition), PartitionsList, PossiblePartitions ).
+    include( attempt_to_fill_webbing_partition(D, ToePartition), PartitionsList, PossiblePartitions ).
 
-attempt_to_fill_webbing_partition( ToePartition, WebbingPartitions ) :-
+attempt_to_fill_webbing_partition( D, ToePartition, WebbingPartitions ) :-
     length( WebbingPartitions, NumWebbings ),
     length( WebMat, NumWebbings ),
     sum( ToePartition, #=, S ),
@@ -41,7 +43,9 @@ attempt_to_fill_webbing_partition( ToePartition, WebbingPartitions ) :-
     domain( Vs, 0, 1 ),
     maplist( table_webbing(ToePartition), WebMat, WebbingPartitions ),
     transpose(WebMat,TWebMat),
-    maplist(sum_geq(2), TWebMat), 
+    maplist(sum_geq(2), WebMat), 
+    DD is D - 1,
+    maplist(sum_geq(DD), WebMat), 
     same_length(Parts,ToePartition),
     maplist(length,Parts,ToePartition),
     append(Parts,TWebMat),
@@ -70,10 +74,20 @@ table_webbing( ToePartition, Webbing, WebbingPartition) :-
     append( PossibleWebbingsList, WebbingTable ),
     table( [Webbing], WebbingTable ).
 
+webbings_based_on_perm( [A,B], [D,E], PossibleWebbings ) :-
+    sum( [A,B], #=, S ),
+    findall( Ws, ( length(Ws, S), domain( Ws, 0, 1 ), length(W1, A), length(W2, B), append([W1,W2], Ws), sum(W1, #=, D), sum(W2, #=, E), labeling([], Ws) ), PossibleWebbings ).
+
 webbings_based_on_perm( [A,B,C], [D,E,F], PossibleWebbings ) :-
     sum( [A,B,C], #=, S ),
     findall( Ws, ( length(Ws, S), domain( Ws, 0, 1 ), length(W1, A), length(W2, B), length(W3, C), append([W1,W2,W3], Ws), sum(W1, #=, D), sum(W2, #=, E), sum(W3, #=, F), labeling([], Ws) ), PossibleWebbings ).
 
+get_permuted_partitions( [A,B], Ps ) :-
+    A #< B,
+    Ps = [ [A,B], [B,A]].
+get_permuted_partitions( [A,B], Ps ) :-
+    A #= B,
+    Ps = [ [A,B]].
 get_permuted_partitions( [A,B,C], Ps ) :-
     A #< B,
     B #< C,
@@ -93,10 +107,10 @@ get_permuted_partitions( [A,B,C], Ps ) :-
 
 feasible_webbing_partitions( 2, ToePartition, Excess, NumWebbings, Vs, Partitions, Costs, Scores ) :-
     length(Partitions, NumWebbings),
-    maplist( length_(3), Partitions ),
+    maplist( length_(2), Partitions ),
     append( Partitions, Vs ),
     domain( Vs, 0, 5 ),
-    table_partitions( Partitions ),
+    table_partitions( 2, Partitions ),
     maplist( get_double_score, Partitions, Scores ),
     maplist( get_sum, Partitions, Costs ),
     get_double_score( ToePartition, TargetScore), 
@@ -115,7 +129,7 @@ feasible_webbing_partitions( 3, ToePartition, Excess, NumWebbings, Vs, Partition
     maplist( length_(3), Partitions ),
     append( Partitions, Vs ),
     domain( Vs, 0, 5 ),
-    table_partitions( Partitions ),
+    table_partitions( 3, Partitions ),
     maplist( get_triple_score, Partitions, Scores ),
     maplist( get_sum, Partitions, Costs ),
     get_triple_score( ToePartition, TargetScore), 
@@ -129,12 +143,17 @@ feasible_webbing_partitions( 3, ToePartition, Excess, NumWebbings, Vs, Partition
     numlist( NumWebbings, L ),
     sorting( BasedPartitions, L, BasedPartitions ).
 
+basesixify( [A,B], C ) :- C #= 6*A + B .
 basesixify( [A,B,C], D ) :- D #= 36*A + 6*B + C.
 
 get_sum(L,S) :- sum(L, #=, S).
 
-table_partitions( Partitions ) :- 
+table_partitions( 2, Partitions ) :- 
+    table( Partitions,  [ [1,1], [1,2], [1,3], [1,4], [1,5], [2,2], [2,3], [2,4], [3,3]] ).
+
+table_partitions( 3, Partitions ) :- 
     table( Partitions,  [ [0,1,1], [0,1,2], [1,1,1], [0,1,3], [0,2,2], [1,1,2], [0,1,4], [0,2,3], [1,1,3], [1,2,2], [0,1,5], [0,2,4], [0,3,3], [1,1,4], [1,2,3], [2,2,2] ] ).
+
 
 get_double_score( [A,B], TS) :- TS #= A*B.
 get_triple_score( [A,B,C], TS) :- TS #= A*B + A*C + B*C.

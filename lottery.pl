@@ -13,6 +13,9 @@
 % Example from paper:
 % lottery_numbers_in_range( 69, 71).
 
+% Command to produce the exceptions for showing L(71,6,6,2) = 38
+% possible_lottery_number( 71, 35, 38 ).
+
 %%% COMPUTE LOTTERY NUMBERS IN A RANGE %%%
 % Given Nmin and Nmax try to compute L(n,6,6,2) for Nmin <= n <= Nmax.
 % The value of L(n,6,6,2) is passed in to the computation of L(n+1,6,6,2)
@@ -476,21 +479,30 @@ write_lotto_result( BadRSTuples, DeltaExceptions, N, UB ) :-
     append( BadRSTuples, DeltaExceptions, TotalExceptions ),
     length(TotalExceptions, Ex),
     ( Ex = 0 -> print_message(informational, format(' L(~w,6,6,2) = ~w ',[N,UB]) );
-                print_message(informational, format('We conjecture that  L(~w,6,6,2) = ~w and must rule out the following cases',[N,UB]) ),
-                maplist( write_bad_r_s_tuple, BadRSTuples ),
-                maplist( write_delta_exception, DeltaExceptions )
+                print_message(informational, format('Conjecture that  L(~w,6,6,2) = ~w.',[N,UB]) ),
+                write_bad_r_s_tuples( BadRSTuples ),
+                write_delta_exceptions( DeltaExceptions )
     ).
 
-write_bad_r_s_tuple( [] ).
-write_bad_r_s_tuple( [R, S, D1, D2] ) :-
-    print_message(informational, format('  Cannot guarantee a slim I when we have ~w isolated blocks, ~w Shannon Subhypergraphs, and ~w <= d_2 <= ~w. ',[R, S, D1, D2]) ).
-
-write_delta_exception( [ R, S, DL, DU, Delta ] ) :-
-    D1 #= 6*R,
-    ( DL = DU -> print_message(informational, format(' ~w Shannon Subgraphs, d_1 = ~w, d_2 = ~w, and \\delta(I) = ~w ',[S, D1, DU, Delta]) );
-                           print_message(informational, format(' ~w Shannon Subgraphs, d_1 = ~w, ~w <= d_2 <= ~w, and \\delta(I) = ~w ',[S, D1, DL, DU, Delta]) )
+write_bad_r_s_tuples(BadRSTuples) :-
+    ( BadRSTuples = [] -> true;
+    print_message(informational, format('BadRSTuples [R,S,A,B]:',[]) ),
+    maplist( write_bad_r_s_tuple, BadRSTuples )
     ).
+write_bad_r_s_tuple( [R, S, A, B] ) :-
+    print_message(informational, format('[~w,~w,~w,~w]',[R, S, A, B]) ).
+
+write_delta_exceptions(DeltaExceptions) :-
+    ( DeltaExceptions = [] -> true;
+    print_message(informational, format('Delta(I) exceptions [R,S,D2U,D2L,Delta]:',[]) ),
+    maplist( write_delta_exception, DeltaExceptions )
+    ).
+write_delta_exception( [R, S, D2U, D2L, Delta] ) :-
+    print_message(informational, format('[~w,~w,~w,~w,~w]',[R, S, D2U, D2L, Delta]) ).
     
+
+
+
 writeln( Stream ) :-
         write( Stream ),
         write('\n').
